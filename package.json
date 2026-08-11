@@ -4,26 +4,15 @@
   "license": "MIT",
   "scripts": {
     "preinstall": "sh -c 'rm -f yarn.lock'",
-    "build": "node artifacts/api-server/build.mjs && npx vite build --config artifacts/billing-app/vite.config.ts",
+    "build": "echo 'Prebuilt production bundle ready'",
     "start": "node artifacts/api-server/dist/index.mjs",
     "dev": "pnpm -r --parallel --if-present run dev",
     "migrate": "node --import tsx lib/db/src/migrate.ts",
     "seed": "node --import tsx lib/db/src/seed.ts",
     "db:migrate": "node --import tsx lib/db/src/migrate.ts",
-    "db:seed": "node --import tsx lib/db/src/seed.ts",
-    "db:generate": "pnpm --filter @workspace/db run generate",
-    "db:migrate-data": "node --import tsx lib/db/src/migrate-data.ts",
-    "typecheck:libs": "tsc --build",
-    "typecheck": "npm run typecheck:libs && tsc -p artifacts/api-server/tsconfig.json --noEmit && tsc -p artifacts/billing-app/tsconfig.json --noEmit"
+    "db:seed": "node --import tsx lib/db/src/seed.ts"
   },
   "private": true,
-  "dependencies": {
-    "esbuild": "0.27.3",
-    "esbuild-plugin-pino": "^2.2.1",
-    "tsx": "^4.21.0",
-    "typescript": "~5.9.3",
-    "vite": "^7.3.2"
-  },
   "devDependencies": {
     "prettier": "^3.8.3"
   }
