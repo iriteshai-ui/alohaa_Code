@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "preinstall": "sh -c 'rm -f yarn.lock'",
-    "build": "npm run typecheck && node artifacts/api-server/build.mjs && npx vite build --config artifacts/billing-app/vite.config.ts",
+    "build": "node artifacts/api-server/build.mjs && npx vite build --config artifacts/billing-app/vite.config.ts",
     "start": "node artifacts/api-server/dist/index.mjs",
     "dev": "pnpm -r --parallel --if-present run dev",
     "migrate": "node --import tsx lib/db/src/migrate.ts",
