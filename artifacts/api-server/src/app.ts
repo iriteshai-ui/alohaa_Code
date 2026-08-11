@@ -65,11 +65,11 @@ app.use(
 
 app.use("/api", router);
 
-// Serve static frontend assets in production / single-process deployment
+// Serve static frontend assets in production (compatible with Express 5)
 const staticPath = path.resolve(process.cwd(), "artifacts/billing-app/dist/public");
 if (fs.existsSync(staticPath)) {
   app.use(express.static(staticPath));
-  app.get("*", (req, res, next) => {
+  app.use((req, res, next) => {
     if (req.path.startsWith("/api")) return next();
     res.sendFile(path.join(staticPath, "index.html"));
   });
