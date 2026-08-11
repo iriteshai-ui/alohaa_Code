@@ -13,6 +13,9 @@
     "db:seed": "node --import tsx lib/db/src/seed.ts"
   },
   "private": true,
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1"
+  },
   "devDependencies": {
     "prettier": "^3.8.3"
   }
