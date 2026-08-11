@@ -4,17 +4,17 @@
   "license": "MIT",
   "scripts": {
     "preinstall": "sh -c 'rm -f yarn.lock'",
-    "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "build": "npm run typecheck && node artifacts/api-server/build.mjs && npx vite build --config artifacts/billing-app/vite.config.ts",
     "start": "node artifacts/api-server/dist/index.mjs",
     "dev": "pnpm -r --parallel --if-present run dev",
-    "migrate": "pnpm --filter @workspace/db run migrate",
-    "seed": "pnpm --filter @workspace/db run seed",
-    "db:migrate": "pnpm --filter @workspace/db run migrate",
-    "db:seed": "pnpm --filter @workspace/db run seed",
+    "migrate": "node --import tsx lib/db/src/migrate.ts",
+    "seed": "node --import tsx lib/db/src/seed.ts",
+    "db:migrate": "node --import tsx lib/db/src/migrate.ts",
+    "db:seed": "node --import tsx lib/db/src/seed.ts",
     "db:generate": "pnpm --filter @workspace/db run generate",
-    "db:migrate-data": "pnpm --filter @workspace/db run migrate:data",
+    "db:migrate-data": "node --import tsx lib/db/src/migrate-data.ts",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "npm run typecheck:libs && tsc -p artifacts/api-server/tsconfig.json --noEmit && tsc -p artifacts/billing-app/tsconfig.json --noEmit"
   },
   "private": true,
   "devDependencies": {
