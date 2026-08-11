@@ -4,6 +4,16 @@ import { seedIfEmpty } from "./lib/startup-seed";
 import fs from "node:fs";
 import path from "node:path";
 
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception at server startup:", err);
+  logger.error({ err }, "Uncaught Exception");
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled Rejection at server startup:", reason);
+  logger.error({ reason }, "Unhandled Rejection");
+});
+
 if (!process.env["PORT"]) {
   const envPaths = [
     path.resolve(process.cwd(), ".env"),
@@ -21,22 +31,23 @@ if (!process.env["PORT"]) {
 }
 
 const rawPort = process.env["PORT"] || "8080";
-const port = Number(rawPort);
+const isNumericPort = /^\d+$/.test(rawPort);
 
-if (Number.isNaN(port) || port <= 0) {
-  throw new Error(`Invalid PORT value: "${rawPort}"`);
-}
-
-// Start HTTP server immediately on 0.0.0.0 so Hostinger health checks pass instantly
-const server = app.listen(port, "0.0.0.0", () => {
-  logger.info({ port }, "Server listening on 0.0.0.0");
-
-  // Run initial seed in background asynchronously without blocking HTTP server boot
-  seedIfEmpty().catch((err) => {
-    logger.warn({ err }, "Startup seed skipped or caught warning");
-  });
-});
+const server = isNumericPort
+  ? app.listen(Number(rawPort), "0.0.0.0", () => {
+      logger.info({ port: rawPort }, "Server listening on 0.0.0.0");
+      seedIfEmpty().catch((err) => {
+        logger.warn({ err }, "Startup seed skipped or caught warning");
+      });
+    })
+  : app.listen(rawPort, () => {
+      logger.info({ port: rawPort }, "Server listening on socket");
+      seedIfEmpty().catch((err) => {
+        logger.warn({ err }, "Startup seed skipped or caught warning");
+      });
+    });
 
 server.on("error", (err) => {
+  console.error("HTTP Server Error:", err);
   logger.error({ err }, "Server error");
 });

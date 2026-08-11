@@ -2,10 +2,11 @@
   "name": "workspace",
   "version": "0.0.0",
   "license": "MIT",
+  "main": "server.js",
   "scripts": {
     "preinstall": "sh -c 'rm -f yarn.lock'",
     "build": "echo 'Prebuilt production bundle ready'",
-    "start": "node artifacts/api-server/dist/index.mjs",
+    "start": "node server.js",
     "dev": "pnpm -r --parallel --if-present run dev",
     "migrate": "node --import tsx lib/db/src/migrate.ts",
     "seed": "node --import tsx lib/db/src/seed.ts",
