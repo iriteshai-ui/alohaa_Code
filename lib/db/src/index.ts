@@ -29,16 +29,29 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+const isSupabase =
+  process.env.DATABASE_URL.includes("supabase.co") ||
+  process.env.DATABASE_URL.includes("supabase.com");
+
 const useSSL =
   process.env.DB_SSL === "true" ||
-  (process.env.NODE_ENV === "production" &&
-    !process.env.DATABASE_URL.includes("localhost") &&
-    !process.env.DATABASE_URL.includes("127.0.0.1"));
+  (process.env.DB_SSL !== "false" && (isSupabase || (process.env.NODE_ENV === "production" && !process.env.DATABASE_URL.includes("localhost") && !process.env.DATABASE_URL.includes("127.0.0.1"))));
+
+const rejectUnauthorized =
+  process.env.DB_SSL_REJECT_UNAUTHORIZED === "true"
+    ? true
+    : process.env.DB_SSL_REJECT_UNAUTHORIZED === "false"
+      ? false
+      : !isSupabase; // Supabase pooler connection typically needs rejectUnauthorized: false if ca isn't custom configured
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: useSSL ? { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false" } : false,
+  ssl: useSSL ? { rejectUnauthorized } : false,
+  max: process.env.DB_MAX_CONNECTIONS ? parseInt(process.env.DB_MAX_CONNECTIONS, 10) : 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 });
 export const db = drizzle(pool, { schema });
 
 export * from "./schema";
+

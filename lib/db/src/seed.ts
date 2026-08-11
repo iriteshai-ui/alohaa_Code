@@ -1,11 +1,35 @@
-import { db } from "./index";
+import { db, pool } from "./index";
 import { usersTable, productsTable, inventoryTable } from "./schema";
+import { count, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+
+export async function resetSequences() {
+  const tables = ["users", "products", "inventory_transactions", "orders", "order_items", "order_payments"];
+  for (const table of tables) {
+    try {
+      await db.execute(
+        sql.raw(`SELECT setval(pg_get_serial_sequence('${table}', 'id'), coalesce((SELECT max(id) FROM "${table}"), 1));`)
+      );
+    } catch (e) {
+      console.warn(`Could not reset sequence for table ${table}:`, e);
+    }
+  }
+}
 
 async function main() {
   console.log("Seeding database...");
 
-  // 1. Create Default Admin User (Only 1 credential required)
+  const [{ value: userCount }] = await db
+    .select({ value: count() })
+    .from(usersTable);
+
+  if (Number(userCount) > 0) {
+    console.log(`Database already has ${userCount} users. Resetting sequences and skipping default seed.`);
+    await resetSequences();
+    return;
+  }
+
+  // 1. Create Default Admin User
   const adminPasswordHash = await bcrypt.hash("Eeya@123", 10);
 
   const [adminUser] = await db
@@ -29,7 +53,7 @@ async function main() {
     { name: "Money Oil", description: "Money Oil", price: "1550", qty: 10 },
     { name: "Education Br.", description: "Education Br.", price: "1800", qty: 10 },
     { name: "Wealth Br.", description: "Wealth Br.", price: "1800", qty: 10 },
-    { name: "Mitawa", description: "Mitawa", price: "550", qty: 20 }, // Low stock (5 < 10)
+    { name: "Mitawa", description: "Mitawa", price: "550", qty: 20 },
     { name: "7 Stone Tumble Br.", description: "7 Stone Tumble Br.", price: "2000", qty: 10 },
     { name: "7 Stone Br.", description: "7 Stone Br.", price: "1300", qty: 10 },
     { name: "Citrin Keychain", description: "Citrin Keychain", price: "1000", qty: 5 },
@@ -85,7 +109,6 @@ async function main() {
       })
       .returning();
 
-    // 3. Create Initial Inventory Transaction logs
     await db.insert(inventoryTable).values({
       productId: inserted.id,
       productName: inserted.name,
@@ -99,12 +122,17 @@ async function main() {
   }
 
   console.log(`Successfully seeded ${sampleProducts.length} products and inventory logs.`);
+  await resetSequences();
   console.log("Seeding completed successfully.");
 }
 
 main()
-  .then(() => process.exit(0))
-  .catch((err) => {
+  .then(async () => {
+    await pool.end();
+    process.exit(0);
+  })
+  .catch(async (err) => {
     console.error("Error seeding database:", err);
+    await pool.end();
     process.exit(1);
   });

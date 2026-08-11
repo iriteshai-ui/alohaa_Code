@@ -11,22 +11,16 @@ This guide provides step-by-step instructions for deploying the **OptimaGodown**
 
 ---
 
-## 2. Step 1: Provision Hostinger PostgreSQL Database
+## 2. Step 1: Provision Supabase PostgreSQL Database
 
-1. Log in to your Hostinger hPanel.
-2. Go to **Databases** → **PostgreSQL Databases**.
-3. Create a new PostgreSQL database:
-   - **Database Name**: e.g., `u123456789_inventory`
-   - **Username**: e.g., `u123456789_admin`
-   - **Password**: Create a strong password.
-4. Note your database credentials and connection details:
-   ```
-   Host: localhost (or provided remote host/IP)
-   Port: 5432
-   Database Name: u123456789_inventory
-   Username: u123456789_admin
-   Password: YOUR_STRONG_PASSWORD
-   ```
+1. Log in to your [Supabase Dashboard](https://supabase.com/dashboard).
+2. Create a new project or select an existing project.
+3. Go to **Project Settings** → **Database** → **Connection String**.
+4. Copy the connection string:
+   - **Transaction Pooler** (Recommended for serverless/cloud Node apps): Port `6543`
+     `postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres`
+   - **Session Pooler / Direct Connection**: Port `5432`
+     `postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres`
 
 ---
 
@@ -35,11 +29,12 @@ This guide provides step-by-step instructions for deploying the **OptimaGodown**
 In your Hostinger Application settings (or via `.env` file on the server), configure the following environment variables:
 
 ```env
-# Database Connection URL (Constructed from your Hostinger DB details)
-DATABASE_URL=postgresql://u123456789_admin:YOUR_STRONG_PASSWORD@localhost:5432/u123456789_inventory
+# Supabase PostgreSQL Connection String
+DATABASE_URL=postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
 
-# Set DB_SSL=true if using a remote SSL database (e.g. Supabase/AWS RDS)
-DB_SSL=false
+# Enable SSL for Supabase (Auto detected for *.supabase.co / *.supabase.com)
+DB_SSL=true
+DB_SSL_REJECT_UNAUTHORIZED=false
 
 # Production Security Secrets
 SESSION_SECRET=create-a-secure-random-64-char-string-here
@@ -54,22 +49,25 @@ COOKIE_SECURE=true
 
 ---
 
-## 4. Step 3: Deployment & Migration Commands
+## 4. Step 3: Deployment, Migration & Seed Commands
 
 Execute the following commands on the server terminal (via Hostinger SSH or build pipeline):
 
 ```bash
 # 1. Install Workspace Dependencies
-pnpm install --frozen-lockfile
+npm install # or pnpm install --frozen-lockfile
 
-# 2. Push Database Schema to Hostinger PostgreSQL
-pnpm run db:migrate
+# 2. Run Database Migration to create tables, indexes, constraints, keys, sequences on Supabase
+npm run migrate # or pnpm run migrate
 
-# 3. Seed Default Admin User (If database is brand new)
-pnpm run db:seed
+# 3. Seed Default Admin User & Sample Products (Resets sequences automatically)
+npm run seed # or pnpm run seed
 
-# 4. Build Production Frontend & Backend Bundles
-pnpm run build
+# 4. (Optional) Transfer existing local database data to Supabase while preserving IDs
+LOCAL_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/inventory_masters npm run db:migrate-data
+
+# 5. Build Production Frontend & Backend Bundles
+npm run build # or pnpm run build
 ```
 
 ---

@@ -8,7 +8,9 @@
     "./schema": "./src/schema/index.ts"
   },
   "scripts": {
-    "migrate": "drizzle-kit push --config ./drizzle.config.ts",
+    "generate": "drizzle-kit generate --config ./drizzle.config.ts",
+    "migrate": "node --import tsx ./src/migrate.ts",
+    "migrate:data": "node --import tsx ./src/migrate-data.ts",
     "push": "drizzle-kit push --config ./drizzle.config.ts",
     "push-force": "drizzle-kit push --force --config ./drizzle.config.ts",
     "seed": "node --import tsx ./src/seed.ts"

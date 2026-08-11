@@ -1,8 +1,10 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
+import path from "node:path";
+import fs from "node:fs";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { pool } from "@workspace/db";
@@ -33,10 +35,12 @@ app.use(
   }),
 );
 
-app.use(cors({
-  origin: true,
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -45,7 +49,7 @@ app.use(
     store: new PgSession({
       pool,
       tableName: "session",
-      createTableIfMissing: false,
+      createTableIfMissing: true,
     }),
     secret: process.env.SESSION_SECRET || "billing-secret-key",
     resave: false,
@@ -56,9 +60,40 @@ app.use(
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     },
-  }),
+  })
 );
 
 app.use("/api", router);
+
+// Serve static frontend assets in production / single-process deployment
+const staticPath = path.resolve(process.cwd(), "artifacts/billing-app/dist/public");
+if (fs.existsSync(staticPath)) {
+  app.use(express.static(staticPath));
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api")) return next();
+    res.sendFile(path.join(staticPath, "index.html"));
+  });
+}
+
+// Global Error Handler for DB Connection Failures & Server Exceptions
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  logger.error({ err }, "Unhandled server error");
+  if (res.headersSent) return;
+
+  const isDbError =
+    err?.code === "ECONNREFUSED" ||
+    err?.code === "ENOTFOUND" ||
+    err?.message?.includes("Failed query") ||
+    err?.message?.includes("connect");
+
+  if (isDbError) {
+    res.status(500).json({
+      error: "Database connection failed. Please ensure your PostgreSQL/Supabase DATABASE_URL in .env is configured and 'npm run migrate' has been executed.",
+    });
+    return;
+  }
+
+  res.status(500).json({ error: err?.message || "Internal server error" });
+});
 
 export default app;

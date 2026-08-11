@@ -103,14 +103,14 @@ PORT=5173
 ```
 
 ### Step 4: Run Migrations and Seed Data
-Push the Drizzle schema to your PostgreSQL database:
+Execute database migration SQL scripts against Supabase / local PostgreSQL:
 ```bash
-pnpm --filter @workspace/db run push
+npm run migrate # or pnpm run migrate
 ```
 
-Populate the database with default staff roles, sample products, and sample inventory movements:
+Populate the database with default staff roles, sample products, and sample inventory movements (and auto-reset sequences):
 ```bash
-pnpm --filter @workspace/db run seed
+npm run seed # or pnpm run seed
 ```
 
 ### Step 5: Start Development Servers
