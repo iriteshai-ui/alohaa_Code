@@ -17,8 +17,14 @@
     "typecheck": "npm run typecheck:libs && tsc -p artifacts/api-server/tsconfig.json --noEmit && tsc -p artifacts/billing-app/tsconfig.json --noEmit"
   },
   "private": true,
+  "dependencies": {
+    "esbuild": "0.27.3",
+    "esbuild-plugin-pino": "^2.2.1",
+    "tsx": "^4.21.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.2"
+  },
   "devDependencies": {
-    "prettier": "^3.8.3",
-    "typescript": "~5.9.3"
+    "prettier": "^3.8.3"
   }
 }
